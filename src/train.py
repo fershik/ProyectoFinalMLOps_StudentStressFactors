@@ -9,22 +9,13 @@ from sklearn.metrics import accuracy_score, f1_score, classification_report
 import logging
 import sys
 from pathlib import Path
-import joblib
-import tempfile
 
-# ==========================================================
-# CONFIGURACIÓN DE LOGGING
-# ==========================================================
+# Configurar logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
-
-# ==========================================================
-# FUNCIONES DEL PIPELINE
-# ==========================================================
 
 def load_config(config_path="src/config.yaml"):
     """Cargar configuración desde archivo YAML"""
@@ -39,9 +30,11 @@ def load_and_preprocess_data(config):
 
     # Leer CSV
     df = pd.read_csv(config["data"]["path"])
-    logger.info(f"Dataset cargado: {df.shape[0]} filas, {df.shape[1]} columnas")
 
-    # Renombrar columnas
+    logger.info(
+        f"Dataset cargado: {df.shape[0]} filas, {df.shape[1]} columnas")
+
+    # Renombrar columnas directamente por índice (evita problemas con emojis)
     df.columns = [
         "sleep_quality",
         "headaches_frequency",
@@ -50,13 +43,15 @@ def load_and_preprocess_data(config):
         "extracurricular_freq",
         "stress_level",
     ]
+
     logger.info("Columnas renombradas exitosamente")
     logger.info(f"Nuevas columnas: {list(df.columns)}")
 
-    # Manejo de nulos
+    # Verificar valores nulos
     null_counts = df.isnull().sum()
     if null_counts.sum() > 0:
-        logger.warning(f"Valores nulos encontrados:\n{null_counts[null_counts > 0]}")
+        logger.warning(
+            f"Valores nulos encontrados:\n{null_counts[null_counts > 0]}")
         df = df.dropna()
         logger.info(f"Filas después de eliminar nulos: {len(df)}")
     else:
@@ -67,10 +62,10 @@ def load_and_preprocess_data(config):
     y = df["stress_level"]
 
     logger.info(f"Features: {list(X.columns)}")
-    logger.info("Target: stress_level")
+    logger.info(f"Target: stress_level")
     logger.info(f"Distribución de clases:\n{y.value_counts().sort_index()}")
 
-    return X, y
+    return X, y, df
 
 
 def split_and_scale_data(X, y, config):
@@ -88,9 +83,11 @@ def split_and_scale_data(X, y, config):
     logger.info(f"Train set: {X_train.shape[0]} muestras")
     logger.info(f"Test set: {X_test.shape[0]} muestras")
 
+    # Escalar datos
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
     logger.info("Features escaladas correctamente")
 
     return X_train_scaled, X_test_scaled, y_train, y_test, scaler
@@ -99,11 +96,13 @@ def split_and_scale_data(X, y, config):
 def train_model(X_train, y_train, config):
     """Entrenar el modelo"""
     logger.info("Entrenando modelo...")
+
     model_params = config["model"]["params"]
     logger.info(f"Parámetros del modelo: {model_params}")
 
     model = RandomForestClassifier(**model_params)
     model.fit(X_train, y_train)
+
     logger.info("Modelo entrenado exitosamente")
 
     return model
@@ -112,6 +111,7 @@ def train_model(X_train, y_train, config):
 def evaluate_model(model, X_test, y_test):
     """Evaluar el modelo"""
     logger.info("Evaluando modelo...")
+
     y_pred = model.predict(X_test)
 
     accuracy = accuracy_score(y_test, y_pred)
@@ -119,24 +119,33 @@ def evaluate_model(model, X_test, y_test):
 
     logger.info(f"Accuracy: {accuracy:.4f}")
     logger.info(f"F1 Score (weighted): {f1:.4f}")
+
+    logger.info("\nReporte de clasificación:")
     logger.info("\n" + classification_report(y_test, y_pred))
 
     return accuracy, f1, y_pred
 
 
-def log_mlflow(model, scaler, X_train, X_test, y_test, y_pred, config, accuracy, f1):
+def log_mlflow(
+        model,
+        scaler,
+        X_train,
+        X_test,
+        y_test,
+        y_pred,
+        config,
+        accuracy,
+        f1):
     """Registrar experimento en MLflow"""
     logger.info("Registrando en MLflow...")
 
-    # Configurar tracking URI de forma universal (Windows / Linux / GitHub Actions)
+    # Configurar tracking URI de forma compatible con Windows y Linux
     tracking_uri = config["mlflow"]["tracking_uri"]
 
-    if tracking_uri.startswith("file:"):
-        # Si ya incluye el prefijo file:, lo usamos directamente
-        tracking_uri = tracking_uri
-    else:
-        # Asegurar formato correcto
-        tracking_uri = "file:" + str(Path(tracking_uri).resolve())
+    # Asegurar que la ruta sea relativa al directorio actual
+    if not tracking_uri.startswith("http"):
+        # Es una ruta local, hacerla absoluta
+        tracking_uri = Path(tracking_uri).absolute().as_uri()
 
     mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(config["mlflow"]["experiment_name"])
@@ -151,18 +160,19 @@ def log_mlflow(model, scaler, X_train, X_test, y_test, y_pred, config, accuracy,
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("f1_score_weighted", f1)
 
-        # Log modelo con firma de entrada/salida
+        # Log modelo con signature
         from mlflow.models.signature import infer_signature
 
         signature = infer_signature(X_train, model.predict(X_train))
+
         mlflow.sklearn.log_model(
-            model,
-            artifact_path="model",
-            signature=signature,
-            input_example=X_test[:5],
+            model, "model", signature=signature, input_example=X_test[:5]
         )
 
-        # Log del scaler como artefacto adicional
+        # Log scaler como artefacto adicional
+        import joblib
+        import tempfile
+
         with tempfile.NamedTemporaryFile(mode="wb", delete=False, suffix=".pkl") as f:
             joblib.dump(scaler, f)
             mlflow.log_artifact(f.name, "preprocessor")
@@ -173,9 +183,6 @@ def log_mlflow(model, scaler, X_train, X_test, y_test, y_pred, config, accuracy,
     logger.info("Experimento registrado exitosamente en MLflow")
 
 
-# ==========================================================
-# FUNCIÓN PRINCIPAL
-# ==========================================================
 def main():
     """Pipeline principal"""
     try:
@@ -188,10 +195,11 @@ def main():
         logger.info("Configuración cargada exitosamente")
 
         # Cargar y preprocesar datos
-        X, y = load_and_preprocess_data(config)
+        X, y, df = load_and_preprocess_data(config)
 
         # Dividir y escalar
-        X_train, X_test, y_train, y_test, scaler = split_and_scale_data(X, y, config)
+        X_train, X_test, y_train, y_test, scaler = split_and_scale_data(
+            X, y, config)
 
         # Entrenar modelo
         model = train_model(X_train, y_train, config)
@@ -200,14 +208,25 @@ def main():
         accuracy, f1, y_pred = evaluate_model(model, X_test, y_test)
 
         # Registrar en MLflow
-        log_mlflow(model, scaler, X_train, X_test, y_test, y_pred, config, accuracy, f1)
+        log_mlflow(
+            model,
+            scaler,
+            X_train,
+            X_test,
+            y_test,
+            y_pred,
+            config,
+            accuracy,
+            f1)
 
         logger.info("=" * 70)
         logger.info("PIPELINE COMPLETADO EXITOSAMENTE!")
         logger.info("=" * 70)
         logger.info(f"Accuracy final: {accuracy:.4f}")
         logger.info(f"F1-Score final: {f1:.4f}")
-        logger.info("Ejecuta 'mlflow ui' para visualizar resultados en http://localhost:5000")
+        logger.info(
+            "Ejecuta 'mlflow ui' para ver los resultados en http://localhost:5000"
+        )
 
     except Exception as e:
         logger.error("=" * 70)
@@ -215,6 +234,7 @@ def main():
         logger.error("=" * 70)
         logger.error(f"Error: {str(e)}")
         import traceback
+
         logger.error(traceback.format_exc())
         sys.exit(1)
 
