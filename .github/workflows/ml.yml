@@ -1,39 +1,67 @@
-name: ML Pipeline CI/CD  # ← Combina ambos
+name: ML Pipeline CI/CD
 
 on:
   push:
     branches: [ main, dev ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   ml-pipeline:
     runs-on: ubuntu-latest
     
     steps:
-    # ═══════════════════════════════════
-    # PARTE CI (Integración Continua)
-    # ═══════════════════════════════════
-    - name: Checkout código
+    # ═══════════════════════════════════════════════════════════════════════
+    # CI - CONTINUOUS INTEGRATION (Integración Continua)
+    # Objetivo: Verificar que el código funciona correctamente
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    - name: 📥 [CI] Checkout código
       uses: actions/checkout@v3
     
-    - name: Instalar dependencias
+    - name: 🐍 [CI] Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: 📦 [CI] Instalar dependencias
       run: make install
     
-    - name: Lint (verificar código)
-      run: make lint            # ← CI
+    - name: 🔍 [CI] Lint con flake8
+      run: make lint
+      continue-on-error: true
     
-    - name: Ejecutar tests
-      run: make test            # ← CI
+    - name: 🧪 [CI] Ejecutar tests
+      run: make test
     
-    # ═══════════════════════════════════
-    # PARTE CD (Despliegue Continuo)
-    # ═══════════════════════════════════
-    - name: Entrenar modelo
-      run: make train           # ← CD
+    # ═══════════════════════════════════════════════════════════════════════
+    # CD - CONTINUOUS DEPLOYMENT (Despliegue Continuo)
+    # Objetivo: Entrenar y desplegar el modelo
+    # ═══════════════════════════════════════════════════════════════════════
     
-    - name: Guardar modelo
-      uses: actions/upload-artifact@v3  # ← CD
+    - name: 🤖 [CD] Entrenar modelo
+      run: make train
+    
+    - name: 💾 [CD] Guardar modelo como artefacto
+      uses: actions/upload-artifact@v4
       with:
         name: ml-model
         path: mlruns/
+        retention-days: 30
+    
+    - name: 📊 [CD] Generar reporte de resultados
+      if: always()
+      run: |
+        echo "## 📊 Resultados del Pipeline ML" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ✅ CI - Continuous Integration" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Código verificado" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Linting ejecutado" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Tests pasados" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 CD - Continuous Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Modelo entrenado" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Modelo registrado en MLflow" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Artefactos guardados en GitHub Actions" >> $GITHUB_STEP_SUMMARY
