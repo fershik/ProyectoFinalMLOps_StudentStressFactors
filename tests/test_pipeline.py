@@ -7,12 +7,10 @@ import sys
 # Agregar src al path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
-
 def test_config_exists():
     """Verificar que el archivo de configuración existe"""
     config_path = Path('src/config.yaml')
     assert config_path.exists(), "config.yaml no encontrado"
-
 
 def test_config_valid():
     """Verificar que la configuración es válida"""
@@ -25,7 +23,6 @@ def test_config_valid():
     assert 'path' in config['data'], "Falta 'path' en config['data']"
     assert 'target_column' in config['data'], "Falta 'target_column' en config['data']"
 
-
 def test_dataset_exists():
     """Verificar que el dataset existe"""
     config_path = 'src/config.yaml'
@@ -34,7 +31,6 @@ def test_dataset_exists():
 
     data_path = Path(config['data']['path'])
     assert data_path.exists(), f"Dataset no encontrado en {data_path}"
-
 
 def test_dataset_structure():
     """Verificar estructura básica del dataset"""
@@ -46,7 +42,6 @@ def test_dataset_structure():
     # Verificar que hay al menos 500 filas
     assert len(df) >= 500, f"Se esperan al menos 500 filas, se encontraron {len(df)}"
 
-
 def test_dataset_no_nulls_or_handleable():
     """Verificar que no hay valores nulos o son manejables"""
     df = pd.read_csv('data/Student_Stress_Factors.csv')
@@ -55,7 +50,6 @@ def test_dataset_no_nulls_or_handleable():
 
     # Permitir hasta 10% de nulos (que luego serán eliminados)
     assert null_percentage.max() < 10, "Demasiados valores nulos en el dataset"
-
 
 def test_target_values():
     """Verificar que los valores del target son válidos"""
@@ -71,14 +65,12 @@ def test_target_values():
     assert all(1 <= val <= 5 for val in unique_values), \
         f"Valores del target fuera del rango esperado (1-5): {unique_values}"
 
-
 def test_src_directory():
     """Verificar que existe el directorio src con los archivos necesarios"""
     src_path = Path('src')
     assert src_path.exists(), "Directorio src/ no encontrado"
     assert (src_path / 'train.py').exists(), "train.py no encontrado"
     assert (src_path / 'config.yaml').exists(), "config.yaml no encontrado"
-
 
 def test_data_types():
     """Verificar que los datos son del tipo correcto"""
@@ -89,7 +81,6 @@ def test_data_types():
         assert pd.api.types.is_numeric_dtype(df[col]), \
             f"Columna {col} no es numérica"
 
-
 def test_data_ranges():
     """Verificar que los valores están en rangos esperados"""
     df = pd.read_csv('data/Student_Stress_Factors.csv')
@@ -99,7 +90,6 @@ def test_data_ranges():
 
     # Verificar que los valores no son excesivamente grandes
     assert (df <= 10).all().all(), "Se encontraron valores mayores a 10 en el dataset"
-
 
 def test_column_rename_logic():
     """Verificar que la lógica de renombrado funciona correctamente"""
@@ -128,6 +118,6 @@ def test_column_rename_logic():
     assert list(df.columns) == expected_columns, \
         f"Columnas renombradas no coinciden. Esperadas: {expected_columns}, Obtenidas: {list(df.columns)}"
 
-
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+    
