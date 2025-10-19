@@ -1,0 +1,39 @@
+name: ML Pipeline CI/CD  # ← Combina ambos
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ml-pipeline:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # ═══════════════════════════════════
+    # PARTE CI (Integración Continua)
+    # ═══════════════════════════════════
+    - name: Checkout código
+      uses: actions/checkout@v3
+    
+    - name: Instalar dependencias
+      run: make install
+    
+    - name: Lint (verificar código)
+      run: make lint            # ← CI
+    
+    - name: Ejecutar tests
+      run: make test            # ← CI
+    
+    # ═══════════════════════════════════
+    # PARTE CD (Despliegue Continuo)
+    # ═══════════════════════════════════
+    - name: Entrenar modelo
+      run: make train           # ← CD
+    
+    - name: Guardar modelo
+      uses: actions/upload-artifact@v3  # ← CD
+      with:
+        name: ml-model
+        path: mlruns/

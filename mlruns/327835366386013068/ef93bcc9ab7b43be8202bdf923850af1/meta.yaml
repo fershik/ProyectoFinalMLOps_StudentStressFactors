@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/Usuario/MLOpsModulo3Fer/ProyectoFinal/mlruns/327835366386013068/ef93bcc9ab7b43be8202bdf923850af1/artifacts
+end_time: 1760903503399
+entry_point_name: ''
+experiment_id: '327835366386013068'
+lifecycle_stage: active
+run_id: ef93bcc9ab7b43be8202bdf923850af1
+run_name: rf_baseline
+run_uuid: ef93bcc9ab7b43be8202bdf923850af1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1760903497547
+status: 3
+tags: []
+user_id: Usuario
