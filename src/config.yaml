@@ -15,5 +15,5 @@ model:
 
 mlflow:
   experiment_name: "student-stress-prediction"
-  tracking_uri: "file:./mlruns"
+  tracking_uri: "mlruns"
   run_name: "rf_baseline"

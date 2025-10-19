@@ -129,8 +129,16 @@ def log_mlflow(model, scaler, X_train, X_test, y_test, y_pred, config, accuracy,
     """Registrar experimento en MLflow"""
     logger.info("Registrando en MLflow...")
     
-    # Configurar MLflow
-    mlflow.set_tracking_uri(config['mlflow']['tracking_uri'])
+    # Configurar tracking URI de forma compatible con Windows y Linux
+    tracking_uri = config['mlflow']['tracking_uri']
+    
+    # Asegurar que la ruta sea relativa al directorio actual
+    if not tracking_uri.startswith('http'):
+        # Es una ruta local, hacerla absoluta
+        from pathlib import Path
+        tracking_uri = Path(tracking_uri).absolute().as_uri()
+    
+    mlflow.set_tracking_uri(tracking_uri)
     mlflow.set_experiment(config['mlflow']['experiment_name'])
     
     with mlflow.start_run(run_name=config['mlflow']['run_name']):
