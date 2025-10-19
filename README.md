@@ -157,77 +157,11 @@ Modifica `src/config.yaml` para ajustar:
 
 Este proyecto es de código abierto y está disponible bajo la licencia MIT.
 
-## 👥 Autor
+## 👥 Autores
 
-Tu Nombre - [Tu GitHub](https://github.com/tu-usuario)
+Deisy Fernanda Camacho Vargas
+Karen Gomez
+Laura Rodriguez Luna
 
-## 🙏 Agradecimientos
 
-- Dataset obtenido de fuentes abiertas
-- MLflow para tracking de experimentos
-- GitHub Actions para CI/CD
-```
 
----
-
-## 🚀 Pasos para Implementar
-
-### 1. Crear el repositorio en GitHub
-
-```bash
-git init
-git add .
-git commit -m "Initial commit: ML pipeline with CI/CD"
-git branch -M main
-git remote add origin <tu-repo-url>
-git push -u origin main
-```
-
-### 2. Colocar el dataset
-
-Asegúrate de que `Student Stress Factors 2.csv` esté en la carpeta `data/`
-
-### 3. Ejecutar localmente
-
-```bash
-make install
-make test
-make train
-mlflow ui
-```
-
-### 4. Activar GitHub Actions
-
-El workflow se ejecutará automáticamente en cada push. Puedes verlo en la pestaña **Actions** de tu repositorio.
-
----
-
-## ✅ Checklist del Proyecto
-
-- [x] Dataset externo (no sklearn.datasets)
-- [x] Preprocesamiento completo
-- [x] Entrenamiento con scikit-learn
-- [x] Métricas de evaluación (accuracy + F1)
-- [x] Tracking con MLflow
-- [x] Registro de modelo como artefacto
-- [x] Estructura organizada (src/)
-- [x] config.yaml con hiperparámetros
-- [x] Makefile con tareas automáticas
-- [x] Tests con pytest
-- [x] CI/CD con GitHub Actions
-- [x] README completo
-- [x] .gitignore apropiado
-
----
-
-## 💡 Mejoras Opcionales
-
-1. **Agregar más modelos**: XGBoost, LightGBM, CatBoost
-2. **Hyperparameter tuning**: GridSearchCV o Optuna
-3. **Feature engineering**: Crear nuevas características
-4. **Deployment**: Crear API con FastAPI
-5. **Docker**: Containerizar la aplicación
-6. **DVC**: Versionado de datos
-7. **Monitoring**: Detectar data drift
-
-¡Tu proyecto está listo para ser implementado! 🎉
