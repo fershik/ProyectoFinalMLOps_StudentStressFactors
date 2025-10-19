@@ -1,6 +1,6 @@
 data:
   path: "data/Student_Stress_Factors.csv"
-  target_column: "How would you rate your stress levels?"  # Nombre original del CSV
+  target_column: "How would you rate your stress levels?"
   test_size: 0.2
   random_state: 42
 
